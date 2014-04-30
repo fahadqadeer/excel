@@ -12,7 +12,7 @@ try {
     // If this request falls under any of them, treat it invalid.
     if (
         !isset($_FILES['file']['error']) ||
-        is_array($_FILES['file']['error'])
+        is_array($_FILES['file']['error'] || !isset($_POST['submit']))
     ) {
         throw new RuntimeException('Invalid parameters.');
     }
@@ -92,115 +92,104 @@ $result1 = mysql_query($sql1);
 
 $col = "";
 $col1 = "";
-$values = "";
+//$values = "";
 for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
-	    for ($j = 1; $j <= $data->sheets[0]['numCols']; $j++) {
-		    if (  $i == 1 ) {
-				if ( $j == $data->sheets[0]['numCols'] ) {
-						$col .= $data->sheets[0]['cells'][$i][$j]."<br />\n";
-						$col1 .=$j ." - ". $data->sheets[0]['cells'][$i][$j]."<br />\n";
-						$getColumnFromSheet = $data->sheets[0]['cells'][$i][$j];
-						$query = "INSERT INTO `temp_col` (`colSheetOrder`) VALUES ('$getColumnFromSheet')";
-						$result_query = mysql_query($query);
-						if (!$result_query) {
-							die('Query failed: ' . mysql_error());
-						}
-
-						continue;
-					}
-				//$col .= "\"".$data->sheets[0]['cells'][$i][$j]."\",";
-				//$col .= $data->sheets[0]['cells'][$i][$j].",";
+	$values = "";
+	for ($j = 1; $j <= $data->sheets[0]['numCols']; $j++) {
+		if (  $i == 1 ) {
+			if ( $j == $data->sheets[0]['numCols'] ) {
 				$col .= $data->sheets[0]['cells'][$i][$j]."<br />\n";
 				$col1 .=$j ." - ". $data->sheets[0]['cells'][$i][$j]."<br />\n";
 				$getColumnFromSheet = $data->sheets[0]['cells'][$i][$j];
 				$query = "INSERT INTO `temp_col` (`colSheetOrder`) VALUES ('$getColumnFromSheet')";
 				$result_query = mysql_query($query);
-				if (!$result_query) {
-					die('Query failed: ' . mysql_error());
-				}
-
-					
-				continue;
-			}
-			//echo "columnNames :\n$columnNames\n";
-			//$values .= "Value = \"".$data->sheets[0]['cells'][$i][$j]."\",";
+					if (!$result_query) {
+						die('Query failed: ' . mysql_error());
+					}
+						continue;
+					}
+						$col .= $data->sheets[0]['cells'][$i][$j]."<br />\n";
+						$col1 .=$j ." - ". $data->sheets[0]['cells'][$i][$j]."<br />\n";
+						$getColumnFromSheet = $data->sheets[0]['cells'][$i][$j];
+						$query = "INSERT INTO `temp_col` (`colSheetOrder`) VALUES ('$getColumnFromSheet')";
+						$result_query = mysql_query($query);
+							if (!$result_query) {
+								die('Query failed: ' . mysql_error());
+							}
+			continue;
+		}
 			if ( $j == $data->sheets[0]['numCols'] ) {
 				$values .= "'".$data->sheets[0]['cells'][$i][$j]."'";
 			}
 			else {
 				$values .= "'".$data->sheets[0]['cells'][$i][$j]."',";
 			}
-	        //echo "\"".$data->sheets[0]['cells'][$i][$j]."\",";
-	    }
+	}
 			$columnNames = $col1;
 			//$values = "\"".$data->sheets[0]['cells'][$i][$j]."\",";
-			
-		$result = mysql_query('select * from upload');
-		if (!$result) {
-		die('Query failed: ' . mysql_error());
-		}
+				$result = mysql_query('select * from upload');
+				if (!$result) {
+				die('Query failed: ' . mysql_error());
+				}
 		
-$i = 0;
-$columnData = "";
-$getFinalList = "";
-while ($i < mysql_num_fields($result)) {
-    //echo "Information for column $i:\n";
-    $meta = mysql_fetch_field($result, $i);
-    if (!$meta) {
-        echo "No information available.<br />\n";
-    }
-$columnData .= $i+1 ." - " . $meta->name."<br />\n";
-$getFinalList .= $meta->name."<br />\n";
-$query = "UPDATE temp_col set colTableOrder = '$meta->name' Where PK = $i+1";
-$result_query = mysql_query($query);
-	if (!$result_query) {
-		die('Query failed: ' . mysql_error());
-	}
-//echo "$meta->name\n";
-    $i++;
-}
-mysql_free_result($result);
+			$colMetaData = 0;
+			$columnData = "";
+			$getFinalList = "";
+			while ($colMetaData < mysql_num_fields($result)) {
+				//echo "Information for column $colMetaData:\n";
+				$meta = mysql_fetch_field($result, $colMetaData);
+				if (!$meta) {
+					echo "No information available.<br />\n";
+				}
+			$columnData .= $colMetaData+1 ." - " . $meta->name."<br />\n";
+			$getFinalList .= $meta->name."<br />\n";
+			$query = "UPDATE temp_col set colTableOrder = '$meta->name' Where PK = $colMetaData+1";
+			$result_query = mysql_query($query);
+				if (!$result_query) {
+					die('Query failed: ' . mysql_error());
+				}
+				$colMetaData++;
+			}
+			mysql_free_result($result);
 
 /*			echo "columnNames From Sheet :-<br />\n$columnNames<br />\n";
 			echo "columnNames From Table :-<br />\n$columnData<br />\n";
 */			
 			$list = "";
-			for ($k = 0; $k < $i; $k++) {
+			for ($k = 0; $k < $colMetaData; $k++) {
 			//$columnOrder = ;
 			$list .= "<input class='textfiled' type=\"text\" name=\"finalColumnList[]\" maxlength=\"4\" size=\"4\"\" /><br >\n ";
 			}
 
+}
 			//echo "$values";
 
-echo '<form name="input" action="uploadeFileOrder.php" method="POST">';
-echo "<table style=\"width:600px\" width=\"80%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">";
-echo "<h1> Columns Mapping! </h1>";
-echo '<table border="1">';
-echo "<tr>";
-echo '  <th align="center">columnNames From Sheet</th>';
-echo '  <th align="center">columnNames From Table</th> ';
-echo '  <th align="center">Choose column</th>';
-echo "</tr>";
-echo "<tr valign=\"top\">";
-echo "  <td >$columnNames<br />\n</td>";
-echo "  <td >$columnData<br />\n</td> ";
-echo "  <td maxlength=\"4\" size=\"4\">$list</td><br />\n";
-echo "</tr>";
-echo "</table>";
-			echo "<br />\n";
-			//echo "<input type=\"hidden\" name=\"colTableOrder[]\" value=\"$columnData\">";
-			echo "<input type=\"hidden\" name=\"colTableOrder[]\" value=\"$getFinalList\">";
-			echo "<input type=\"hidden\" name=\"colOrder[]\" value=\"$col\">";
-			echo "<input type='submit' name='submit' value='Submit'/><br >\n";
-			echo "<br />\n";
-}
+			echo '<form name="input" action="uploadeFileOrder.php" method="POST">';
+			echo "<table style=\"width:600px\" width=\"80%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">";
+			echo "<h1> Columns Mapping! </h1>";
+			echo '<table border="1">';
+			echo "<tr>";
+			echo '  <th align="center">columnNames From Sheet</th>';
+			echo '  <th align="center">columnNames From Table</th> ';
+			echo '  <th align="center">Choose column</th>';
+			echo "</tr>";
+			echo "<tr valign=\"top\">";
+			echo "  <td >$columnNames<br />\n</td>";
+			echo "  <td >$columnData<br />\n</td> ";
+			echo "  <td maxlength=\"4\" size=\"4\">$list</td><br />\n";
+			echo "</tr>";
+			echo "</table>";
+						echo "<br />\n";
+						echo "<input type=\"hidden\" name=\"sheetValues[]\" value=\"$values\">";
+						echo "<input type=\"hidden\" name=\"colTableOrder[]\" value=\"$getFinalList\">";
+						echo "<input type=\"hidden\" name=\"colOrder[]\" value=\"$col\">";
+						echo "<input type='submit' name='submit' value='submit'/><br >\n";
+						echo "<br />\n"; 
+						
+						
 
-//if ( $_GET['Submit'] == 'Submit' ) {
 
-//$getOrder = $_GET['finalColumnList'];
-//echo "getOrder : $getOrder";
 
-//}
 
 /*			$sql = "INSERT INTO upload ($columnNames) 
 			VALUES ($values)";
@@ -220,13 +209,6 @@ echo "</table>";
 
 }
 
-//if ( $_GET['Submit'] == 'Submit' ) {
-
-//$getOrder = $_GET['finalColumnList'];
-//echo "getOrder : $getOrder";
-
-//}
-
 /*			$sql = "INSERT INTO upload ($columnNames) 
 			VALUES ($values)";
 		    echo $sql."\n";
@@ -238,6 +220,5 @@ echo "</table>";
 */
 
 //    echo 'File is uploaded successfully.';
-
 
 ?>

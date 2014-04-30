@@ -79,8 +79,9 @@ $conn = mysql_connect("localhost","root","");
 mysql_select_db("test",$conn);
 
 $col = "";
-$values = "";
+//$values = array();
 for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
+		$values = "";
 	    for ($j = 1; $j <= $data->sheets[0]['numCols']; $j++) {
 		    if (  $i == 1 ) {
 				if ( $j == $data->sheets[0]['numCols'] ) {
@@ -105,11 +106,9 @@ for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
 			//$values = "\"".$data->sheets[0]['cells'][$i][$j]."\",";
 
 			echo "columnNames = $columnNames\n";
-			echo "$values";			
+			echo "$values";
 			
 			echo "\n";
-	
-}
 
 			$sql = "INSERT INTO upload ($columnNames) 
 			VALUES ($values)";
@@ -119,7 +118,7 @@ for ($i = 1; $i <= $data->sheets[0]['numRows']; $i++) {
 					{ 
 					echo ('Database Error:' . mysql_error());
 					}
-
+}
 
     echo 'File is uploaded successfully.';
 
